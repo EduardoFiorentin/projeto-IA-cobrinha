@@ -4,22 +4,6 @@ from pygame.locals import *
 from sys import exit
 from random import randint
 
-class CobrinhaEnv(Env):
-    def __init__(self):
-        pass
-        
-    def step(self):
-        pass
-    
-    def render(self):
-        pass
-    
-    def reset(self):
-        pass
-
-
-        
-
 running = True
 
 # configuration
@@ -71,7 +55,8 @@ while running:
                 
             
     for position in snake_body:
-        pygame.draw.rect(screen, (0, 255, 0), (position[0], position[1], BLOCK_SIZE, BLOCK_SIZE))
+        if position == snake_body[-1]: pygame.draw.rect(screen, (0, 130, 150), (position[0], position[1], BLOCK_SIZE, BLOCK_SIZE))
+        else: pygame.draw.rect(screen, (0, 255, 0), (position[0], position[1], BLOCK_SIZE, BLOCK_SIZE))
         
     pygame.draw.rect(screen, (255, 0, 0), (food[0], food[1], BLOCK_SIZE, BLOCK_SIZE))
         
