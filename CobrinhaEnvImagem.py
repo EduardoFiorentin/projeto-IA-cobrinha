@@ -6,7 +6,7 @@ from pygame.locals import *
 from random import randint
 
 class CobrinhaEnv(gym.Env):
-    def __init__(self, render_mode=None, render_tick=None):
+    def __init__(self, render_mode=None):
         super(CobrinhaEnv, self).__init__()
         
         self.render_mode = render_mode
@@ -15,13 +15,11 @@ class CobrinhaEnv(gym.Env):
         self.screen_width = 500
         self.screen_height = 500
         self.block_size = 20
-        self.render_tick = render_tick
 
         self.tryes = 0
 
         # Definindo os espaços de observação e ação
-        # self.observation_space = spaces.Box(low=0, high=255, shape=(100, 100, 3), dtype=np.uint8)  # Redimensionado para 25x25
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(5,), dtype=np.float32)
+        self.observation_space = spaces.Box(low=0, high=255, shape=(100, 100, 3), dtype=np.uint8)  # Redimensionado para 25x25
         self.action_space = spaces.Discrete(4)  # 4 direções: cima, baixo, esquerda, direita
 
         # # Inicializa o Pygame
@@ -99,7 +97,8 @@ class CobrinhaEnv(gym.Env):
 
         done = False
         if (new_position[0] < 0 or new_position[0] >= self.screen_width or
-                new_position[1] < 0 or new_position[1] >= self.screen_height):
+                new_position[1] < 0 or new_position[1] >= self.screen_height or
+                len(self.snake_body) != len(set(self.snake_body))):
             done = True
             reward += -500
 
@@ -135,25 +134,14 @@ class CobrinhaEnv(gym.Env):
             pygame.draw.rect(self.screen, (255, 0, 0), (self.food[0], self.food[1], self.block_size, self.block_size))
                 
             pygame.display.flip()
-            if self.render_tick != None: self.clock.tick(self.render_tick)
+            # self.clock.tick(10)
 
     def _get_state(self):
-        # raw_image = pygame.surfarray.array3d(self.screen).transpose(1, 0, 2)
-        # resized_image = pygame.transform.smoothscale(pygame.surfarray.make_surface(raw_image), (100, 100))
-        # normalized_image = pygame.surfarray.array3d(resized_image).transpose(1, 0, 2) / 255.0
+        raw_image = pygame.surfarray.array3d(self.screen).transpose(1, 0, 2)
+        resized_image = pygame.transform.smoothscale(pygame.surfarray.make_surface(raw_image), (100, 100))
+        normalized_image = pygame.surfarray.array3d(resized_image).transpose(1, 0, 2) / 255.0
         # return pygame.surfarray.array3d(resized_image).transpose(1, 0, 2)
-        dx = (self.food[0] - self.snake_body[-1][0]) / self.screen_width
-        dy = (self.food[1] - self.snake_body[-1][1]) / self.screen_height
-
-        # Distância Euclidiana
-        dist_comida = np.sqrt(dx**2 + dy**2)
-        
-        # Direção atual
-        dir_x = self.direction_x / self.block_size
-        dir_y = self.direction_y / self.block_size
-
-        # Vetor de observação
-        return np.array([dx, dy, dist_comida, dir_x, dir_y], dtype=np.float32)
+        return normalized_image
 
     def close(self):
         pygame.quit()

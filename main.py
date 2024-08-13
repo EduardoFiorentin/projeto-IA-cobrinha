@@ -47,27 +47,45 @@ env = DummyVecEnv([lambda: CobrinhaEnv(render_mode="human")])
 #     # gradient_steps=4                # Aumenta o número de atualizações por passo de tempo
 # )
 
+# model = DQN(
+#     'MlpPolicy',
+#     env,
+#     verbose=1,
+#     # n_timesteps = 1.2e5,
+#     learning_rate = 1e-3,
+#     batch_size = 128,
+#     buffer_size = 10000,
+#     learning_starts = 2000,
+#     gamma = 0.5,
+#     target_update_interval = 200,
+#     train_freq = 4,
+#     gradient_steps = 8,
+#     exploration_fraction = 0.2,
+#     exploration_initial_eps=0.3,
+#     exploration_final_eps = 0.07,
+#     policy_kwargs = dict(net_arch=[256, 256])
+# )
+
 model = DQN(
-    'MlpPolicy',
-    env,
+    'MlpPolicy',  # Política MLP, adequada para entradas vetoriais
+    env,          # Seu ambiente com o novo espaço de observação
     verbose=1,
-    # n_timesteps = 1.2e5,
-    learning_rate = 4e-3,
-    batch_size = 128,
-    buffer_size = 10000,
-    learning_starts = 1000,
-    gamma = 0.75,
-    target_update_interval = 600,
-    train_freq = 16,
-    gradient_steps = 8,
-    exploration_fraction = 0.2,
-    exploration_initial_eps=0.8,
-    exploration_final_eps = 0.07,
-    policy_kwargs = dict(net_arch=[256, 256])
+    learning_rate=1e-3,  # Taxa de aprendizado ajustada
+    batch_size=64,       # Batch size pode ser menor, pois as entradas são mais simples
+    buffer_size=50000,   # Buffer de replay maior para melhor generalização
+    learning_starts=1000,
+    gamma=0.99,          # Fator de desconto mantido para olhar para recompensas futuras
+    target_update_interval=500,
+    train_freq=4,
+    gradient_steps=4,
+    exploration_fraction=0.2,
+    exploration_initial_eps=0.3,
+    exploration_final_eps=0.05,
+    policy_kwargs=dict(net_arch=[64, 64])  # Arquitetura mais simples da rede
 )
 
 # Treinamento do modelo
-model.learn(total_timesteps=500000)
+model.learn(total_timesteps=10000)
 
 # Salvamento do modelo treinado
 model.save("dqn_snake")
@@ -78,23 +96,7 @@ env.close()
 
 # TESTES =============================================================================
 
-env = DummyVecEnv([lambda: CobrinhaEnv(render_mode="human")])
 
-# Carregando o modelo treinado
-model = DQN.load("dqn_snake")
-
-model.exploration_rate = 0
-
-# Teste do modelo treinado
-for i in range(0, 10):
-    obs = env.reset()
-    for i in range(1000):
-        action, _states = model.predict(obs, deterministic=True)
-        obs, rewards, dones, info = env.step(action)
-        env.render()
-        if dones:
-            break
-        
         
 # Verificar se a imagem vista pela IA está sendo atualizada 
 
