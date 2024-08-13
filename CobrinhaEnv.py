@@ -6,29 +6,25 @@ from pygame.locals import *
 from random import randint
 
 class CobrinhaEnv(gym.Env):
+    
+    metadata = {'render_modes': ['human'], 'render_fps': 50}
+    
     def __init__(self, render_mode=None, render_tick=None):
         super(CobrinhaEnv, self).__init__()
-        
-        self.render_mode = render_mode
 
         # Configuração do ambiente
+        self.render_mode = render_mode
         self.screen_width = 500
         self.screen_height = 500
         self.block_size = 20
         self.render_tick = render_tick
-
         self.tryes = 0
 
         # Definindo os espaços de observação e ação
-        # self.observation_space = spaces.Box(low=0, high=255, shape=(100, 100, 3), dtype=np.uint8)  # Redimensionado para 25x25
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(5,), dtype=np.float32)
         self.action_space = spaces.Discrete(4)  # 4 direções: cima, baixo, esquerda, direita
 
-        # # Inicializa o Pygame
-        # pygame.init()
-        # self.screen = pygame.Surface((self.screen_width, self.screen_height))
-        # self.clock = pygame.time.Clock()
-        
+        # Inicializa o Pygame
         pygame.init()
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption("Snake")
@@ -83,13 +79,8 @@ class CobrinhaEnv(gym.Env):
             self.tryes = 0
         else:
             self.snake_body.pop(0)
-            
-            # distance = abs(self.food[0] - self.snake_body[-1][0]) + abs(self.food[1] - self.snake_body[-1][1])
             distance = pow(pow((self.food[0] - self.snake_body[-1][0]), 2) + pow(self.food[1] - self.snake_body[-1][1], 2), (1/2))
-            # print(-distance)
-            
             reward = -(distance // 20) if (distance // 20) > 1 else -1
-            # reward = -5
             
 
         if self.ate:
@@ -104,27 +95,17 @@ class CobrinhaEnv(gym.Env):
             reward += -500
 
         # limtar tentativas
-        # if self.tryes >= 100:
-        #     self.tryes = 0
-        #     reward += -1000
-        #     done = True
+        if self.tryes >= 100:
+            self.tryes = 0
+            reward += -1000
+            done = True
 
-        # reward = 1 if self.ate else -1 if done else 0
         
         if self.render_mode: self.render()
 
         return self._get_state(), reward, done, False, {}
 
     def render(self):
-        # self.screen.fill((0, 0, 0))
-
-        # for position in self.snake_body:
-        #     pygame.draw.rect(self.screen, (0, 255, 0), (position[0], position[1], self.block_size, self.block_size))
-
-        # pygame.draw.rect(self.screen, (255, 0, 0), (self.food[0], self.food[1], self.block_size, self.block_size))
-
-        # pygame.display.flip()
-        
         if self.render_mode:
             self.screen.fill((0, 0, 0))
 
@@ -138,17 +119,9 @@ class CobrinhaEnv(gym.Env):
             if self.render_tick != None: self.clock.tick(self.render_tick)
 
     def _get_state(self):
-        # raw_image = pygame.surfarray.array3d(self.screen).transpose(1, 0, 2)
-        # resized_image = pygame.transform.smoothscale(pygame.surfarray.make_surface(raw_image), (100, 100))
-        # normalized_image = pygame.surfarray.array3d(resized_image).transpose(1, 0, 2) / 255.0
-        # return pygame.surfarray.array3d(resized_image).transpose(1, 0, 2)
         dx = (self.food[0] - self.snake_body[-1][0]) / self.screen_width
         dy = (self.food[1] - self.snake_body[-1][1]) / self.screen_height
-
-        # Distância Euclidiana
         dist_comida = np.sqrt(dx**2 + dy**2)
-        
-        # Direção atual
         dir_x = self.direction_x / self.block_size
         dir_y = self.direction_y / self.block_size
 
@@ -158,7 +131,7 @@ class CobrinhaEnv(gym.Env):
     def close(self):
         pygame.quit()
 
-# Testando o ambiente
+
 if __name__ == "__main__":
     from stable_baselines3.common.env_checker import check_env
     
