@@ -28,7 +28,7 @@ env = gym.make(
 
 
 
-model = DQN(
+model = DQN (
     'MlpPolicy',  # Política MLP, adequada para entradas vetoriais
     env,          # Seu ambiente com o novo espaço de observação
     verbose=0,
@@ -45,6 +45,8 @@ model = DQN(
     exploration_final_eps=0.05,
     policy_kwargs=dict(net_arch=[64, 64])  # Arquitetura mais simples da rede
 )
+
+
 
 """
 

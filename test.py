@@ -4,18 +4,14 @@ import gymnasium as gym
 from stable_baselines3.common.vec_env import DummyVecEnv
 from CobrinhaEnv import CobrinhaEnv
 
-# env = DummyVecEnv([lambda: CobrinhaEnv(render_mode="human", render_tick=50)])
-
 gym.register(
     id='Cobrinha',
-    entry_point='CobrinhaEnv:CobrinhaEnv',
-    # parâmetros __init__
-    # kwargs={'game': None}
+    entry_point='CobrinhaEnv:CobrinhaEnv'
 )
 env = gym.make('Cobrinha', render_mode = "human", render_tick=50)
 
 # Carregando o modelo treinado
-model = DQN.load("dqn_snake2")
+model = DQN.load("treinoTesteCallback/5")
 
 model.exploration_rate = 0
 

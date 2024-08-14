@@ -9,7 +9,7 @@ class CobrinhaEnv(gym.Env):
     
     metadata = {'render_modes': ['human'], 'render_fps': 50}
     
-    def __init__(self, render_mode=None, render_tick=None):
+    def __init__(self, render_mode=None, render_tick=None, limit_steps=-1):
         super(CobrinhaEnv, self).__init__()
 
         # Configuração do ambiente
@@ -19,6 +19,9 @@ class CobrinhaEnv(gym.Env):
         self.block_size = 20
         self.render_tick = render_tick
         self.tryes = 0
+        self.steps = 0
+        self.eat_times = 0
+        self.limit_steps = limit_steps
 
         # Definindo os espaços de observação e ação
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(5,), dtype=np.float32)
@@ -39,6 +42,7 @@ class CobrinhaEnv(gym.Env):
         self.rng, seed = gym.utils.seeding.np_random(seed)
         
         self.tryes = 0
+        self.steps = 0
 
         self.direction_x = self.block_size
         self.direction_y = 0
@@ -52,6 +56,7 @@ class CobrinhaEnv(gym.Env):
     def step(self, action):
 
         self.tryes += 1
+        self.steps += 1
         
         if action == 0:
             self.direction_x = 0
@@ -100,6 +105,10 @@ class CobrinhaEnv(gym.Env):
             reward += -1000
             done = True
 
+        # Opção para limitar quantidade de steps por episodio
+        if self.limit_steps != -1: 
+            if self.steps > self.limit_steps: 
+                done = True
         
         if self.render_mode: self.render()
 
@@ -130,6 +139,9 @@ class CobrinhaEnv(gym.Env):
 
     def close(self):
         pygame.quit()
+        
+    def get_data():
+        pass
 
 
 if __name__ == "__main__":
