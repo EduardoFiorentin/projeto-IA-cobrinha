@@ -11,9 +11,9 @@ from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
 from stable_baselines3.common.env_util import make_vec_env
 
 # Configurações gerais 
-DIR_NAME = "callBackApply"
-TRAIN_STEPS = 50000
-SAVE_FREQ = 1000  # Frequência de salvamento
+DIR_NAME = "callBackPlot"
+TRAIN_STEPS = 200000
+SAVE_FREQ = 10000  # Frequência de salvamento
 NOT_ALLOW_REUSE_DIRS = False
 ENV_ID = "Cobrinha"
 ENV_ENTRY_POINT = 'CobrinhaEnv:CobrinhaEnv'
@@ -22,7 +22,7 @@ TEST_ENV_RENDER_MODE = "human"
 # Configurações da avaliação do treinamento 
 EVAL_LOG_FILE = os.path.join(DIR_NAME, "evaluations.txt")
 EVAL_FREQUENCY = SAVE_FREQ
-NUM_EVAL_EPISODES = 3
+NUM_EVAL_EPISODES = 10
 
 
 class SaveOnTrainStepsNumCallback(BaseCallback):
@@ -30,8 +30,10 @@ class SaveOnTrainStepsNumCallback(BaseCallback):
         super().__init__(0)  # 0 -> verbose
         self.save_freq = save_freq
         self.log_dir = DIR_NAME
-        self.num_saves = 0
+        self.num_saves = 1
         self.save_path = os.path.join(self.log_dir, "0")
+        self.reward_log = []  # Lista para armazenar recompensas médias
+        self.steps_log = []  # Lista para armazenar o número de passos
 
     def _init_callback(self) -> None:
         # if self.save_path is not None:
@@ -81,6 +83,11 @@ class SaveOnTrainStepsNumCallback(BaseCallback):
                 
                 episode_steps_num.append(episode_steps)
                 episodes_reward_list.append(episode_rew)
+            
+            # Média da recompensa por passo
+            mean_reward = sum(episodes_reward_list) / sum(episode_steps_num)
+            self.reward_log.append(mean_reward)
+            self.steps_log.append(self.n_calls)
                 
                 
             file.write(f"Recompensa média para {NUM_EVAL_EPISODES} rodadas: {sum(episodes_reward_list) / sum(episode_steps_num)}"+"\n")
@@ -93,6 +100,22 @@ class SaveOnTrainStepsNumCallback(BaseCallback):
             self.save_path = os.path.join(self.log_dir, str(self.num_saves))
 
         return True
+    
+def plot_performance(callback: SaveOnTrainStepsNumCallback):
+    plt.figure(figsize=(10, 6))
+    plt.plot(callback.steps_log, callback.reward_log, label="Recompensa Média")
+    plt.xlabel("Número de Passos")
+    plt.ylabel("Recompensa Média")
+    plt.title("Desempenho do Modelo Durante o Treinamento")
+    plt.legend()
+    plt.grid(True)
+    # Salvar a figura no diretório especificado
+    save_path = os.path.join(DIR_NAME, "performance_plot.png")
+    plt.savefig(save_path)
+    print(f"Gráfico salvo em {save_path}")
+    
+    # plt.show()
+
 
 if __name__ == "__main__":
     if not os.path.isdir(DIR_NAME): 
@@ -115,7 +138,7 @@ if __name__ == "__main__":
     model = DQN(
         'MlpPolicy',  # Política MLP, adequada para entradas vetoriais
         env,          # Seu ambiente com o novo espaço de observação
-        verbose=0,
+        verbose=1,
         learning_rate=1e-3,  # Taxa de aprendizado ajustada
         batch_size=64,       # Batch size pode ser menor, pois as entradas são mais simples
         buffer_size=50000,   # Buffer de replay maior para melhor generalização
@@ -132,3 +155,5 @@ if __name__ == "__main__":
     
     # Treinamento com callbacks
     model.learn(total_timesteps=TRAIN_STEPS, callback=[save_callback])
+    
+    plot_performance(save_callback)
