@@ -17,6 +17,7 @@ SAVE_FREQ = 1000  # Frequência de salvamento
 NOT_ALLOW_REUSE_DIRS = False
 ENV_ID = "Cobrinha"
 ENV_ENTRY_POINT = 'CobrinhaEnv:CobrinhaEnv'
+TEST_ENV_RENDER_MODE = "human"
 
 # Configurações da avaliação do treinamento 
 EVAL_LOG_FILE = os.path.join(DIR_NAME, "evaluations.txt")
@@ -53,10 +54,12 @@ class SaveOnTrainStepsNumCallback(BaseCallback):
             file.write(self.save_path+"\n")
             
             gym.register(
-                id='Cobrinha',
-                entry_point='CobrinhaEnv:CobrinhaEnv'
+                id=ENV_ID,
+                entry_point=ENV_ENTRY_POINT
             )
-            local_env = gym.make('Cobrinha', render_mode = "human", limit_steps=10000)
+            
+            # Configurar de acordo com o ambiente 
+            local_env = gym.make(ENV_ID, render_mode = TEST_ENV_RENDER_MODE, limit_steps=10000)
             
             episodes_reward_list = []
             episode_steps_num = []
@@ -107,15 +110,6 @@ if __name__ == "__main__":
     
     # Callback de salvamento
     save_callback = SaveOnTrainStepsNumCallback(save_freq=SAVE_FREQ)
-
-    # Ambiente de avaliação
-    # eval_env = make_vec_env(ENV_ID, n_envs=NUM_EVAL_ENVS, seed=0)
-
-    # Callback de avaliação
-    # eval_callback = EvalCallback(eval_env, best_model_save_path=EVAL_LOG_DIR,
-    #                              log_path=EVAL_LOG_DIR, eval_freq=EVAL_FREQUENCY,
-    #                              n_eval_episodes=NUM_EVAL_EPISODES, deterministic=True,
-    #                              render=False)
 
     # Modelo DQN
     model = DQN(
