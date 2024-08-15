@@ -11,7 +11,7 @@ gym.register(
 env = gym.make('Cobrinha', render_mode = "human", render_tick=50)
 
 # Carregando o modelo treinado
-model = DQN.load("novaCobrinha/nova_cobrinha")
+model = DQN.load("testeNewCallback\9")
 
 model.exploration_rate = 0
 

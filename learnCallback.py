@@ -11,13 +11,13 @@ from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
 from stable_baselines3.common.env_util import make_vec_env
 
 # Configurações gerais 
-DIR_NAME = "callBackPlot"
-TRAIN_STEPS = 200000
+DIR_NAME = "testeNewCallback"
+TRAIN_STEPS = 1000000
 SAVE_FREQ = 10000  # Frequência de salvamento
 NOT_ALLOW_REUSE_DIRS = False
 ENV_ID = "Cobrinha"
 ENV_ENTRY_POINT = 'CobrinhaEnv:CobrinhaEnv'
-TEST_ENV_RENDER_MODE = "human"
+ENV_RENDER_MODE = None
 
 # Configurações da avaliação do treinamento 
 EVAL_LOG_FILE = os.path.join(DIR_NAME, "evaluations.txt")
@@ -31,14 +31,25 @@ class SaveOnTrainStepsNumCallback(BaseCallback):
         self.save_freq = save_freq
         self.log_dir = DIR_NAME
         self.num_saves = 1
-        self.save_path = os.path.join(self.log_dir, "0")
+        self.save_path =  os.path.join(self.log_dir, str(self.num_saves))
         self.reward_log = []  # Lista para armazenar recompensas médias
         self.steps_log = []  # Lista para armazenar o número de passos
 
-    def _init_callback(self) -> None:
+    def plot_performance(self) -> None:
         # if self.save_path is not None:
         #     os.makedirs(self.save_path, exist_ok=True)
-        pass
+        plt.figure(figsize=(10, 6))
+        plt.plot(self.steps_log, self.reward_log, label="Recompensa Média")
+        plt.xlabel("Número de Passos")
+        plt.ylabel("Recompensa Média")
+        plt.title("Desempenho do Modelo Durante o Treinamento")
+        plt.legend()
+        plt.grid(True)
+        # Salvar a figura no diretório especificado
+        save_path = os.path.join(DIR_NAME, f"performance_plot{self.num_saves}.png")
+        plt.savefig(save_path)
+        print(f"Gráfico salvo em {save_path}")
+        
 
     def _on_step(self) -> bool:
         if self.n_calls % self.save_freq == 0:
@@ -61,7 +72,7 @@ class SaveOnTrainStepsNumCallback(BaseCallback):
             )
             
             # Configurar de acordo com o ambiente 
-            local_env = gym.make(ENV_ID, render_mode = TEST_ENV_RENDER_MODE, limit_steps=10000)
+            local_env = gym.make(ENV_ID, render_mode = ENV_RENDER_MODE, limit_steps=10000)
             
             episodes_reward_list = []
             episode_steps_num = []
@@ -91,7 +102,9 @@ class SaveOnTrainStepsNumCallback(BaseCallback):
                 
                 
             file.write(f"Recompensa média para {NUM_EVAL_EPISODES} rodadas: {sum(episodes_reward_list) / sum(episode_steps_num)}"+"\n")
-            # env.close() 
+            
+            self.plot_performance()
+            
             print("Testes Finalizados")
             
             file.close()
@@ -101,18 +114,18 @@ class SaveOnTrainStepsNumCallback(BaseCallback):
 
         return True
     
-def plot_performance(callback: SaveOnTrainStepsNumCallback):
-    plt.figure(figsize=(10, 6))
-    plt.plot(callback.steps_log, callback.reward_log, label="Recompensa Média")
-    plt.xlabel("Número de Passos")
-    plt.ylabel("Recompensa Média")
-    plt.title("Desempenho do Modelo Durante o Treinamento")
-    plt.legend()
-    plt.grid(True)
-    # Salvar a figura no diretório especificado
-    save_path = os.path.join(DIR_NAME, "performance_plot.png")
-    plt.savefig(save_path)
-    print(f"Gráfico salvo em {save_path}")
+# def plot_performance(callback: SaveOnTrainStepsNumCallback):
+#     plt.figure(figsize=(10, 6))
+#     plt.plot(callback.steps_log, callback.reward_log, label="Recompensa Média")
+#     plt.xlabel("Número de Passos")
+#     plt.ylabel("Recompensa Média")
+#     plt.title("Desempenho do Modelo Durante o Treinamento")
+#     plt.legend()
+#     plt.grid(True)
+#     # Salvar a figura no diretório especificado
+#     save_path = os.path.join(DIR_NAME, "performance_plot.png")
+#     plt.savefig(save_path)
+#     print(f"Gráfico salvo em {save_path}")
     
     # plt.show()
 
@@ -128,7 +141,7 @@ if __name__ == "__main__":
         id=ENV_ID,
         entry_point=ENV_ENTRY_POINT
     )
-    env = gym.make(ENV_ID, render_mode="human")
+    env = gym.make(ENV_ID, render_mode=ENV_RENDER_MODE)
     env = Monitor(env, DIR_NAME)
     
     # Callback de salvamento
@@ -156,4 +169,4 @@ if __name__ == "__main__":
     # Treinamento com callbacks
     model.learn(total_timesteps=TRAIN_STEPS, callback=[save_callback])
     
-    plot_performance(save_callback)
+    # plot_performance(save_callback)

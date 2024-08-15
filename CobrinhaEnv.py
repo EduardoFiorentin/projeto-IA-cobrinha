@@ -179,7 +179,7 @@ class CobrinhaEnv(gym.Env):
         self.eat_times = 0
         self.limit_steps = limit_steps
 
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(6,), dtype=np.float32)
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(9,), dtype=np.float32)
         self.action_space = spaces.Discrete(4)
 
         pygame.init()
@@ -295,11 +295,18 @@ class CobrinhaEnv(gym.Env):
         dir_y = self.direction_y / self.block_size
 
         # Verificar se a próxima ação resultará em colisão com o corpo
-        next_position = (self.snake_body[-1][0] + self.direction_x, self.snake_body[-1][1] + self.direction_y)
-        collision_with_self = 1.0 if next_position in self.snake_body[:-1] else 0.0
+        # next_position = (self.snake_body[-1][0] + self.direction_x, self.snake_body[-1][1] + self.direction_y)
+        # collision_with_self = 1.0 if next_position in self.snake_body[:-1] else 0.0
+        
+        np_x_1_y_0 = 1.0 if (self.snake_body[-1][0] + self.block_size, self.snake_body[-1][1]) in self.snake_body[:-1] else 0.0
+        np_x_0_y_1 =  1.0 if (self.snake_body[-1][0], self.snake_body[-1][1] + self.block_size) in self.snake_body[:-1] else 0.0
+        np_x_m1_y_0 =  1.0 if (self.snake_body[-1][0] - self.block_size, self.snake_body[-1][1]) in self.snake_body[:-1] else 0.0
+        np_x_0_y_m1 =  1.0 if (self.snake_body[-1][0], self.snake_body[-1][1] - self.block_size) in self.snake_body[:-1] else 0.0
+        
+        # print(np_x_1_y_0, np_x_0_y_1, np_x_m1_y_0, np_x_0_y_m1)
 
         # Assegure que o vetor de observação tenha sempre comprimento 7
-        state = np.array([dx, dy, dist_comida, dir_x, dir_y, collision_with_self], dtype=np.float32)
+        state = np.array([dx, dy, dist_comida, dir_x, dir_y, np_x_1_y_0, np_x_0_y_1, np_x_m1_y_0, np_x_0_y_m1], dtype=np.float32)
         return state
 
     def close(self):
