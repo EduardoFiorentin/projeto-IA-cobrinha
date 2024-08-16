@@ -10,19 +10,31 @@ from stable_baselines3.common.results_plotter import load_results, ts2xy
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
 from stable_baselines3.common.env_util import make_vec_env
 
-# Configurações gerais 
-DIR_NAME = "testeNewCallback"
-TRAIN_STEPS = 1000000
-SAVE_FREQ = 10000  # Frequência de salvamento
-NOT_ALLOW_REUSE_DIRS = False
+
 ENV_ID = "Cobrinha"
 ENV_ENTRY_POINT = 'CobrinhaEnv:CobrinhaEnv'
-ENV_RENDER_MODE = None
+
+gym.register(
+    id=ENV_ID,
+    entry_point=ENV_ENTRY_POINT
+)
+
+
+# Configurações gerais 
+DIR_NAME =              "testRefatoring"      # Diretório onde são salvos modelos intermediários e graficos 
+TRAIN_STEPS =           30000                 # Steps de treinamento
+MODEL_SAVE_FREQ =       5000                   # Frequência de salvamento de modelos 
+NOT_ALLOW_REUSE_DIRS =  False                  # impedir que arquivos com modelos salvos sejam sobrescritos
+ENV_RENDER_MODE =       "human"                 #modo de renderização
 
 # Configurações da avaliação do treinamento 
-EVAL_LOG_FILE = os.path.join(DIR_NAME, "evaluations.txt")
-EVAL_FREQUENCY = SAVE_FREQ
-NUM_EVAL_EPISODES = 10
+EVAL_LOG_FILE =         os.path.join(DIR_NAME, "evaluations.txt")   # arquivo onde são registradas as avaliações dos modelos 
+EVAL_FREQUENCY =        MODEL_SAVE_FREQ
+NUM_EVAL_EPISODES =     100                     # numero de episodios de cada avaliação
+PLOT_FREQUENCY =        10000                   # Frequência de plot do gráfico de evolução (valor deve ser múltiplo de MODEL_SAVE_FREQ)
+
+LEARN_ENV = gym.make(ENV_ID, render_mode=ENV_RENDER_MODE)
+TEST_ENV = gym.make(ENV_ID, render_mode = ENV_RENDER_MODE)
 
 
 class SaveOnTrainStepsNumCallback(BaseCallback):
@@ -66,13 +78,10 @@ class SaveOnTrainStepsNumCallback(BaseCallback):
             file.write("-"*30+"\n")
             file.write(self.save_path+"\n")
             
-            gym.register(
-                id=ENV_ID,
-                entry_point=ENV_ENTRY_POINT
-            )
             
             # Configurar de acordo com o ambiente 
-            local_env = gym.make(ENV_ID, render_mode = ENV_RENDER_MODE, limit_steps=10000)
+            local_env = TEST_ENV
+            local_env.reset()
             
             episodes_reward_list = []
             episode_steps_num = []
@@ -102,32 +111,20 @@ class SaveOnTrainStepsNumCallback(BaseCallback):
                 
                 
             file.write(f"Recompensa média para {NUM_EVAL_EPISODES} rodadas: {sum(episodes_reward_list) / sum(episode_steps_num)}"+"\n")
+            file.close()
             
-            self.plot_performance()
+            if self.n_calls % PLOT_FREQUENCY == 0: 
+                self.plot_performance()
+                print(f"Grafico de {self.n_calls} steps plotado!")
             
             print("Testes Finalizados")
             
-            file.close()
             
             self.num_saves += 1
             self.save_path = os.path.join(self.log_dir, str(self.num_saves))
 
         return True
     
-# def plot_performance(callback: SaveOnTrainStepsNumCallback):
-#     plt.figure(figsize=(10, 6))
-#     plt.plot(callback.steps_log, callback.reward_log, label="Recompensa Média")
-#     plt.xlabel("Número de Passos")
-#     plt.ylabel("Recompensa Média")
-#     plt.title("Desempenho do Modelo Durante o Treinamento")
-#     plt.legend()
-#     plt.grid(True)
-#     # Salvar a figura no diretório especificado
-#     save_path = os.path.join(DIR_NAME, "performance_plot.png")
-#     plt.savefig(save_path)
-#     print(f"Gráfico salvo em {save_path}")
-    
-    # plt.show()
 
 
 if __name__ == "__main__":
@@ -141,17 +138,17 @@ if __name__ == "__main__":
         id=ENV_ID,
         entry_point=ENV_ENTRY_POINT
     )
-    env = gym.make(ENV_ID, render_mode=ENV_RENDER_MODE)
-    env = Monitor(env, DIR_NAME)
+    
+    env = Monitor(LEARN_ENV, DIR_NAME)
     
     # Callback de salvamento
-    save_callback = SaveOnTrainStepsNumCallback(save_freq=SAVE_FREQ)
+    save_callback = SaveOnTrainStepsNumCallback(save_freq=MODEL_SAVE_FREQ)
 
     # Modelo DQN
     model = DQN(
         'MlpPolicy',  # Política MLP, adequada para entradas vetoriais
         env,          # Seu ambiente com o novo espaço de observação
-        verbose=1,
+        verbose=0,
         learning_rate=1e-3,  # Taxa de aprendizado ajustada
         batch_size=64,       # Batch size pode ser menor, pois as entradas são mais simples
         buffer_size=50000,   # Buffer de replay maior para melhor generalização

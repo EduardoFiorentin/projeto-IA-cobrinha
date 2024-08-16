@@ -1,0 +1,18 @@
+------------------------------
+testRefatoring\1
+Recompensa média para 100 rodadas: 11.380670611439843
+------------------------------
+testRefatoring\2
+Recompensa média para 100 rodadas: 102.65049199305422
+------------------------------
+testRefatoring\3
+Recompensa média para 100 rodadas: 121.68976854287217
+------------------------------
+testRefatoring\4
+Recompensa média para 100 rodadas: 127.75573497372805
+------------------------------
+testRefatoring\5
+Recompensa média para 100 rodadas: 128.2229733189942
+------------------------------
+testRefatoring\6
+Recompensa média para 100 rodadas: 131.27585117307845
